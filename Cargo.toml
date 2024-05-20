@@ -1,0 +1,9 @@
+[package]
+name = "Logistic-Regression"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+csv = "1.3.0"
+polars = "0.39.2"
