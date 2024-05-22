@@ -3,6 +3,7 @@ mod util;
 use anyhow::Result;
 use polars::prelude::*;
 use std::f64::consts::E;
+use std::process::exit;
 use polars::export::num::{pow, Pow};
 use util::{
     load_data,
@@ -16,7 +17,7 @@ use util::{
 // https://en.wikipedia.org/wiki/Cross-entropy#Cross-entropy_loss_function_and_logistic_regression
 // https://medium.com/@koushikkushal95/logistic-regression-from-scratch-dfb8527a4226
 fn main() -> Result<()> {
-    let df = load_data();
+    let mut df = load_data();
     let mut weights = Weights::opt(&df);
     let mut stack = Stack::empty();
 
@@ -32,21 +33,51 @@ fn main() -> Result<()> {
         weights.m -= 0.1
     }
 
-    for i in 0..MI {
+    let mut delta= 0.2;
+    for i in 0..1000 {
 
         stack.push(weights.clone(), mse(&df, &weights));
 
         if stack.change2() == 0f64 {
             println!("erm");
         } else if stack.change2() < 0f64 {
-            weights.m += 0.1
-        } else if stack.change2() > 0f64 {
-            weights.m -= 0.1
+
+        }else if stack.change2() > 0f64 {
+            delta *= -1f64
+        }
+        weights.m += delta;
+
+        println!("delta: {:?}", delta);
+        println!("change: {:?}", stack.change2());
+        println!("score: {:?}", stack.data[2]);
+
+        if stack.change1() == -stack.change2() {
+            println!("premature stop at {i}");
+            let df1 = df.with_column(
+                df.column("x")?
+                    .f64()?
+                    .apply(|x| Some(logistic(x?, &weights)))
+                    .into_series()
+                    .rename("y2")
+                    .to_owned()
+            )?;
+            // let mut iters = df.columns(["x", "y", "y2"])?
+            //     .iter().map(|s| Ok(s.f64()?.into_iter())).collect::<Result<Vec<_>>>()?;
+            //
+            // for row in 0..df.height() {
+            //     for iter in &mut iters {
+            //         let value = iter.next().expect("should have as many iterations as rows");
+            //         print!("{} ", value.unwrap());
+            //     }
+            //     println!("");
+            // }
+            // exit(0);
+
         }
 
 
 
-    println!("{:?}", weights);
+
     }
 
 
@@ -70,5 +101,5 @@ fn mse(df: &DataFrame, weights: &Weights) -> f64 {
         .f64().unwrap()
         .apply(|x| Some((x? - logistic(x?, &weights)).pow(2)))
         .into_series()
-        .sum::<f64>().unwrap() / df.height() as f64
+        .mean().unwrap()
 }
