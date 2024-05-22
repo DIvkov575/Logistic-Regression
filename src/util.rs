@@ -40,14 +40,14 @@ impl Weights {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Pair {
-    pub weights: Weights,
-    pub score: f64,
+#[derive(Clone)]
+struct Pair {
+    weights: Weights,
+    score: f64,
 }
 
 pub struct Stack {
-    pub data: [Pair; 3]
+    data: [Pair; 3]
 }
 impl Stack {
     pub fn empty() -> Self {
@@ -68,8 +68,12 @@ impl Stack {
             ],
         }
     }
-    pub fn change1(&self) -> f64 { self.data[1].score - self.data[0].score }
-    pub fn change2(&self) -> f64 { self.data[2].score - self.data[1].score }
+    pub fn change1(&self) -> f64 {
+        self.data[0].score - self.data[1].score
+    }
+    pub fn change2(&self) -> f64 {
+        self.data[1].score - self.data[2].score
+    }
     pub fn push(&mut self, weights: Weights, score: f64) {
         self.data[0] = self.data[1].clone();
         self.data[1] = self.data[2].clone();
