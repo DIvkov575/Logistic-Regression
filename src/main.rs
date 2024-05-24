@@ -36,27 +36,62 @@ pub struct LogisticRegression {
 
 impl LogisticRegression {
     pub fn new() -> Self {
-        Self { m: 5f64, a: 1f64, b: 1f64, scores: vec![f64::MAX] }
+        Self { m: 50f64, a: 50f64, b: 50f64, scores: vec![f64::MAX] }
     }
     fn opt(&mut self, df: &mut DataFrame) {
         let mut sd: f64;
-        let mut delta = -1_f64;
-
+        let mut delta_m = 0.5_f64;
+        let mut delta_a = 0.5_f64;
+        let mut delta_b = 0.5_f64;
         self.scores.push(self.mse(&df));
-
-        for i in 0..25  {
-
-            self.m += delta;
+        for i in 0..50  {
+            // m opt
+            self.m += delta_m;
             self.scores.push(self.mse(&df));
             sd = self.sd();
 
             if sd < 0f64 {}
             else if sd > 0f64 {
-                delta *= -1_f64
+                delta_m *= -1_f64
             } else {
                 unimplemented!()
             }
+
+            // a opt
+            self.a += delta_a;
+            self.scores.push(self.mse(&df));
+            sd = self.sd();
+
+            if sd < 0f64 {}
+            else if sd > 0f64 {
+                delta_a *= -1_f64
+            } else {
+                // unimplemented!()
+                println!("exit! m: {}; a: {}; b: {}", self.m, self.a, self.b);
+                std::process::exit(0);
+            }
+
+            // b opt
+            self.b += delta_b;
+            self.scores.push(self.mse(&df));
+            sd = self.sd();
+
+            if sd < 0f64 {}
+            else if sd > 0f64 {
+                delta_b *= -1_f64
+            } else {
+                unimplemented!()
+            }
+
+            println!("m: {}; a: {}; b: {}", self.m, self.a, self.b);
         }
+
+        // let mut sd: f64;
+        // self.scores.push(self.mse(&df));
+        // for i in 0..50  {
+        // }
+        //
+        // println!("m: {}; a: {}; b: {}", self.m, self.a, self.b)
 
     }
     fn sd(&self) ->f64 {
