@@ -28,86 +28,71 @@ fn main() -> Result<()> {
 
 #[derive(Debug, Clone)]
 pub struct LogisticRegression {
-    pub m: f64, // population max
-    pub a: f64, //
+    pub m: f64,
+    pub a: f64,
     pub b: f64,
-    pub scores: Vec<f64>,
+    pub scores_m: Vec<f64>,
+    pub scores_a: Vec<f64>,
+    pub scores_b: Vec<f64>,
 }
 
 impl LogisticRegression {
     pub fn new() -> Self {
-        Self { m: 50f64, a: 50f64, b: 50f64, scores: vec![f64::MAX] }
+        Self {
+        m: 50f64,
+        a: 50f64,
+        b: 50f64,
+        scores_m: vec![f64::MAX],
+        scores_a: vec![f64::MAX],
+        scores_b: vec![f64::MAX],
+        }
     }
     fn opt(&mut self, df: &mut DataFrame) {
         let mut sd: f64;
         let mut delta_m = 0.5_f64;
-        let mut delta_a = 0.5_f64;
-        let mut delta_b = 0.5_f64;
-        self.scores.push(self.mse(&df));
-        for i in 0..50  {
-            // m opt
+        let mut delta_a = -0.5_f64;
+        let mut delta_b = -0.5_f64;
+        self.scores_m.push(self.mse(&df));
+        for i in 0..500  {
+            // m
             self.m += delta_m;
-            self.scores.push(self.mse(&df));
-            sd = self.sd();
+            self.scores_m.push(self.mse(&df));
+            sd = self.scores_m[self.scores_m.len()-1] - self.scores_m[self.scores_m.len() - 2];
 
             if sd < 0f64 {}
-            else if sd > 0f64 {
-                delta_m *= -1_f64
-            } else {
-                unimplemented!()
-            }
+            else if sd > 0f64 { delta_m *= -1_f64 }
+            else { println!("exit m! m: {}; a: {}; b: {}", self.m, self.a, self.b);exit(0); }
 
-            // a opt
+
+            // a
             self.a += delta_a;
-            self.scores.push(self.mse(&df));
-            sd = self.sd();
+            self.scores_a.push(self.mse(&df));
+            sd = self.scores_a[self.scores_a.len()-1] - self.scores_a[self.scores_a.len() - 2];
 
             if sd < 0f64 {}
-            else if sd > 0f64 {
-                delta_a *= -1_f64
-            } else {
-                // unimplemented!()
-                println!("exit! m: {}; a: {}; b: {}", self.m, self.a, self.b);
-                std::process::exit(0);
-            }
+            else if sd > 0f64 { delta_a *= -1_f64 }
+            else { println!("exit a! m: {}; a: {}; b: {}", self.m, self.a, self.b);exit(0); }
 
-            // b opt
+
+            // b
             self.b += delta_b;
-            self.scores.push(self.mse(&df));
-            sd = self.sd();
+            self.scores_b.push(self.mse(&df));
+            sd = self.scores_b[self.scores_b.len()-1] - self.scores_b[self.scores_b.len() - 2];
 
             if sd < 0f64 {}
-            else if sd > 0f64 {
-                delta_b *= -1_f64
-            } else {
-                unimplemented!()
-            }
+            else if sd > 0f64 { delta_b *= -1_f64 }
+            else { println!("exit b! m: {}; a: {}; b: {}", self.m, self.a, self.b);exit(0); }
 
+            println!("scores: {} {} {}", self.scores_m[self.scores_m.len()-1], self.scores_a[self.scores_a.len()-1], self.scores_b[self.scores_b.len()-1]);
             println!("m: {}; a: {}; b: {}", self.m, self.a, self.b);
         }
 
-        // let mut sd: f64;
-        // self.scores.push(self.mse(&df));
-        // for i in 0..50  {
-        // }
-        //
-        // println!("m: {}; a: {}; b: {}", self.m, self.a, self.b)
 
-    }
-    fn sd(&self) ->f64 {
-        self.scores[self.scores.len()-1] - self.scores[self.scores.len() - 2]
     }
     fn logistic(&self, x: f64) -> f64 {
         let m = self.m;
         let a = self.a;
         let b = self.b;
-
-        m / (1f64 + a * E.powf((-x)*b))
-    }
-    fn _real_logistic(&self, x: f64) -> f64 {
-        let m = 25f64;
-        let a = 1f64;
-        let b = 1f64;
 
         m / (1f64 + a * E.powf((-x)*b))
     }
@@ -119,10 +104,7 @@ impl LogisticRegression {
         let y_agg: f64 = df.column("y").unwrap()
             .sum().unwrap();
 
-        // println!("y_agg {}", y_agg);
-        // println!("fx_agg {}", fx_agg);
         (y_agg.pow(2) - 2f64*y_agg*fx_agg + fx_agg.pow(2)) / (df.height() as f64)
-
     }
 }
 
