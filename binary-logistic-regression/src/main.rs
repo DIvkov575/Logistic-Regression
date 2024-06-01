@@ -1,40 +1,19 @@
 use std::f64;
-use ndarray::array;
+use ndarray::{array, Array, Array1, Array2, ArrayView, Ix1, stack_new_axis};
 
 
 fn main() {
-    // let a = vec![
-    //     vec![4f64, 3f64],
-    //     vec![2f64, 1f64],
-    // ];
-    let b = vec![
-        vec![1f64],
-        vec![2f64],
-    ];
-    let c = vec![
-        vec![1f64, 2f64],
-        vec![3f64, 4f64],
-    ];
-
-    // let b = vec![1f64,2f64];
-
-
-    // dot(c, b);
-
     // https://medium.com/@koushikkushal95/logistic-regression-from-scratch-dfb8527a4226
+    let lr = LR::empty();
 
-
-
-    // let weights = *vec![0f64; 5];
-    // println!("{}", weights);
 
 }
 
 
 pub struct LR {
-    pub lr: f64,
+    pub learn_rate: f64,
     pub n_iters: usize,
-    pub weights: Vec<f64>,
+    pub weights: Array1<f64>,
     pub bias: f64,
     pub losses: Vec<f64>,
 }
@@ -42,30 +21,26 @@ pub struct LR {
 impl LR {
     pub fn empty() -> Self {
         Self {
-            lr: 0.001,
+            learn_rate: 0.001,
             n_iters: 1000,
-            weights: Vec::new(),
+            weights: array![],
             bias: 0f64,
             losses: Vec::new(),
 
         }
     }
 
-    pub fn _sigmoid(x: f64) -> f64 {
-        1f64 / (1f64 + f64::consts::E.powf(-x))
-    }
-
-    pub fn predict(&self, X: Vec<Vec<f64>>) -> Vec<f64> {
-        let output: Vec<f64> = Vec::new();
-        for (index, value) in dot_2x1(X, &self.weights).iter().enumerate() {
-            output[index] = Self::_sigmoid(value + self.bias);
+    pub fn _sigmoid(input: Array1<f64>) -> Array1<f64> {
+        let mut output: Array1<f64> = Array1::default(Ix1(input.len()));
+        for (index, x) in input.iter().enumerate() {
+                output[index] = 1. / (1. + f64::consts::E.powf(-x));
         }
-
         output
     }
 
-    pub fn loss(&self, y_true: Vec<f64>, y_pred: Vec<f64>) -> f64 {
+    pub fn compute_loss(&self, y_true: Array1<f64>, y_pred: Array1<f64>) -> f64 {
         // binary cross entropy loss
+
         let mut y1 = 0f64;
         let mut y2 = 0f64;
 
@@ -77,58 +52,40 @@ impl LR {
         -(y1 + y2) / y_true.len() as f64
     }
 
-    pub fn gd(&self)
-}
-
-
-// #[allow(non_snake_case)]
-// fn dot_2x2(A: Vec<Vec<f64>>, B: Vec<Vec<f64>>) -> Vec<Vec<f64>> {
-//     assert_eq!(A[0].len(), B.len());
-//     let mut output: Vec<Vec<f64>> = vec![vec![0f64; B[0].len()]; A[0].len()];
-//
-//     let j = 0;
-//
-//     for h in 0..A.len() {
-//         for i in 0..A[0].len() {
-//             output[h][j] += A[h][i] * B[i][j];
-//         }
-//     }
-//
-//     for row in &output {
-//         println!("{:?}", row);
-//     }
-//
-//
-//     output
-// }
-
-#[allow(non_snake_case)]
-fn dot_2x1(A: Vec<Vec<f64>>, B: &[f64]) -> Vec<f64> {
-    assert_eq!(A[0].len(), B.len());
-    // let mut output: Vec<Vec<f64>> = vec![vec![0f64; B[0].len()]; A[0].len()];
-    let mut output = vec![0f64; A[0].len()];
-
-    for h in 0..A.len() {
-        for i in 0..A[0].len() {
-            output[h] += A[h][i] * B[i];
-        }
+    pub fn feed_forward(&self, X: Array2<f64>) -> Array1<f64> {
+        let z = X.dot(&self.weights);
+        Self::_sigmoid(z)
     }
 
-    for row in &output {
-        println!("{:?}", row);
+    pub fn fit(&mut self, X: Array2<f64>, y: Array1<f64>) {
+            let mut dw;
+            let mut db;
+            let n_samples= X.shape()[0] as f64;
+            let n_features= X.shape()[1];
+
+            self.weights = Array1::zeros(Ix1(n_features));
+            self.bias = 0f64;
+
+            for _ in 0..self.n_iters {
+                let A = self.feed_forward(X.clone());
+                let x = self.compute_loss(y.clone(), A.clone());
+                self.losses.push(x);
+                let dz: Array1<f64> = A.clone() - y.clone(); // derivative of sigmoid and bce X.T*(A-y)
+
+                dw = (1. / n_samples) * X.t().dot(&dz.clone());
+                db = (1. / n_samples) * (A.clone().sum() - y.clone().sum());
+                assert_eq!(self.weights.len(), dw.len());
+                for i in 0..dw.len() {
+                    self.weights[i] -= self.learn_rate * dw[i];
+                }
+                self.bias -= self.learn_rate * db;
+            }
     }
 
-
-    output
-}
-
-#[allow(non_snake_case)]
-fn transpose(X: Vec<Vec<f64>>) -> Vec<Vec<f64>> {
-    let mut Y: Vec<Vec<f64>> = vec![vec![0f64; X.len()]; X[0].len()];
-    for i in 0..X.len() {
-        for j in 0..X[0].len() {
-            Y[i][j] = X[j][i];
-        }
+    pub fn predict(&self, X: Array2<f64>) -> Array1<usize> {
+        let y_hat = X.dot(&self.weights) + self.bias;
+        let y_predicted = Self::_sigmoid(y_hat);
+        let y_predicted_cls = y_predicted.map(|x| if (x > &0.5) {1} else {1});
+        y_predicted_cls
     }
-    Y
 }
