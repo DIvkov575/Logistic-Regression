@@ -49,7 +49,8 @@ impl LR {
 
         }
     }
-    pub fn sigmoid(x: f64) -> f64 {
+
+    pub fn _sigmoid(x: f64) -> f64 {
         1f64 / (1f64 + f64::consts::E.powf(-x))
     }
     pub fn bce(&self, y_true: Vec<f64>, y_pred: Vec<f64>) -> f64 {
@@ -65,9 +66,10 @@ impl LR {
         -(y1 + y2) / y_true.len() as f64
     }
 
-    // pub fn feed_forward(&self, X: Vec<Vec<f64>>) {
-    //     let z = dot(X, transpose(self.weights.clone()));
-    // }
+    pub fn feed_forward(&self, X: Vec<Vec<f64>>) {
+        let z = dot(X, transpose(Vec::from_iter([self.weights.clone()])));
+        let A = Self::sigmoid(z);
+    }
 
     // pub fn fit(&mut self, X: &[&[f64]], y: &[f64]) {
     //     let dw;
