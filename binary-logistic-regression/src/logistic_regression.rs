@@ -46,11 +46,6 @@ impl LR {
         -(y1 + y2) / y_true.len() as f64
     }
 
-    pub fn feed_forward(&self, X: Array2<f64>) -> Array1<f64> {
-        let z = X.dot(&self.weights);
-        Self::_sigmoid(z)
-    }
-
     pub fn fit(&mut self, X: Array2<f64>, y: Array1<f64>) {
         let mut dw;
         let mut db;
@@ -61,7 +56,8 @@ impl LR {
         self.bias = 0f64;
 
         for _ in 0..self.n_iters {
-            let A = self.feed_forward(X.clone());
+            let z = X.clone().dot(&self.weights);
+            let A = Self::_sigmoid(z);
             let x = self.compute_loss(y.clone(), A.clone());
             self.losses.push(x);
             let dz: Array1<f64> = A.clone() - y.clone(); // derivative of sigmoid and bce X.T*(A-y)

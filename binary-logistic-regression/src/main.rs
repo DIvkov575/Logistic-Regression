@@ -50,7 +50,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let X_test = test.to_ndarray::<Float64Type>(IndexOrder::C)?;
     let X_train = train.to_ndarray::<Float64Type>(IndexOrder::C)?;
 
-    // println!("{:?}", y_train);
+    println!("{:?}", y_train);
 
 
     let mut lr = LR::empty();
