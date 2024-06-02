@@ -76,8 +76,6 @@ impl LR {
     }
 
     pub fn predict(&self, X: Array2<f64>) -> Array1<usize> {
-        println!("{:?}", X);
-        println!("{:?}", self.weights);
         let y_hat = X.dot(&self.weights) + self.bias;
         let y_predicted = Self::_sigmoid(y_hat);
         let y_predicted_cls = y_predicted.iter().map(|x| if x > &0.5 {1} else {0}).collect();
