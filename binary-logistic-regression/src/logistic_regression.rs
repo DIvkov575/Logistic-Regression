@@ -9,7 +9,6 @@ pub struct LR {
     pub n_iters: usize,
     pub weights: Array1<f64>,
     pub bias: f64,
-    pub losses: Vec<f64>,
 }
 
 impl LR {
@@ -19,8 +18,6 @@ impl LR {
             n_iters: 2000,
             weights: array![],
             bias: 0f64,
-            losses: Vec::new(),
-
         }
     }
 
@@ -58,7 +55,6 @@ impl LR {
         for _ in 0..self.n_iters {
             let A = Self::sigmoid(X.clone().dot(&self.weights));
             let x = self.compute_loss(y.clone(), A.clone());
-            self.losses.push(x);
             let dz: Array1<f64> = A.clone() - y.clone(); // derivative of sigmoid and bce X.T*(A-y)
 
             dw = (1. / n_samples) * X.t().dot(&dz.clone());
