@@ -24,7 +24,7 @@ impl LR {
         }
     }
 
-    pub fn _sigmoid(input: Array1<f64>) -> Array1<f64> {
+    pub fn sigmoid(input: Array1<f64>) -> Array1<f64> {
         let mut output: Array1<f64> = Array1::default(Ix1(input.len()));
         for (index, x) in input.iter().enumerate() {
             output[index] = 1. / (1. + f64::consts::E.powf(-x));
@@ -56,8 +56,7 @@ impl LR {
         self.bias = 0f64;
 
         for _ in 0..self.n_iters {
-            let z = X.clone().dot(&self.weights);
-            let A = Self::_sigmoid(z);
+            let A = Self::sigmoid(X.clone().dot(&self.weights));
             let x = self.compute_loss(y.clone(), A.clone());
             self.losses.push(x);
             let dz: Array1<f64> = A.clone() - y.clone(); // derivative of sigmoid and bce X.T*(A-y)
@@ -74,7 +73,7 @@ impl LR {
 
     pub fn predict(&self, X: Array2<f64>) -> Array1<&str> {
         let y_hat = X.dot(&self.weights) + self.bias;
-        let y_predicted = Self::_sigmoid(y_hat);
+        let y_predicted = Self::sigmoid(y_hat);
         println!("{}", y_predicted);
         println!("{}", y_predicted.mean().unwrap());
         let y_predicted_cls = y_predicted.iter().map(|x| if x > &0.5 {"1"} else {"0"}).collect();
