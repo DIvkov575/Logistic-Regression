@@ -2,6 +2,7 @@
 
 use std::f64;
 use ndarray::{array, Array1, Array2, Ix1};
+use polars::datatypes::Int64Type;
 
 pub struct LR {
     pub learn_rate: f64,
@@ -75,10 +76,10 @@ impl LR {
         }
     }
 
-    pub fn predict(&self, X: Array2<f64>) -> Array1<usize> {
+    pub fn predict(&self, X: Array2<f64>) -> Array1<&str> {
         let y_hat = X.dot(&self.weights) + self.bias;
         let y_predicted = Self::_sigmoid(y_hat);
-        let y_predicted_cls = y_predicted.iter().map(|x| if x > &0.5 {1} else {0}).collect();
+        let y_predicted_cls = y_predicted.iter().map(|x| if x > &0.5 {"1"} else {"0"}).collect();
         y_predicted_cls
     }
 }

@@ -21,9 +21,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let y_pred= lr.predict(X_test);
 
     // let mut results = Series::from_iter(y_pred.into_iter());
-    let mut results = DataFrame::from
+    // let mut results = DataFrame::from_rows(&y_pred)?;
+    let mut results = DataFrame::new(vec![Series::from_iter(y_pred)])?;
     let mut writer = CsvWriter::new(
-        File::options().write(true).truncate(true).open(Path::new("out.csv"))?
+        File::options().write(true).truncate(true).create(true).open(Path::new("out.csv"))?
     );
     writer.finish(&mut results)?;
 
