@@ -16,7 +16,7 @@ impl LR {
     pub fn empty() -> Self {
         Self {
             learn_rate: 0.001,
-            n_iters: 1000,
+            n_iters: 2000,
             weights: array![],
             bias: 0f64,
             losses: Vec::new(),
@@ -79,6 +79,8 @@ impl LR {
     pub fn predict(&self, X: Array2<f64>) -> Array1<&str> {
         let y_hat = X.dot(&self.weights) + self.bias;
         let y_predicted = Self::_sigmoid(y_hat);
+        println!("{}", y_predicted);
+        println!("{}", y_predicted.mean().unwrap());
         let y_predicted_cls = y_predicted.iter().map(|x| if x > &0.5 {"1"} else {"0"}).collect();
         y_predicted_cls
     }
