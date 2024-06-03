@@ -9,6 +9,7 @@ pub struct LR {
     pub n_iters: usize,
     pub weights: Array1<f64>,
     pub bias: f64,
+    pub losses: Vec<f64>,
 }
 
 impl LR {
@@ -18,6 +19,8 @@ impl LR {
             n_iters: 2000,
             weights: array![],
             bias: 0f64,
+            losses: Vec::new(),
+
         }
     }
 
@@ -29,9 +32,8 @@ impl LR {
         output
     }
 
-    pub fn compute_loss(&self, y_true: Array1<f64>, y_pred: Array1<f64>) -> f64 {
-        // binary cross entropy loss
-
+    pub fn binary_cross_entropy(&self, y_true: Array1<f64>, y_pred: Array1<f64>) -> f64 {
+        // loss function
         let mut y1 = 0f64;
         let mut y2 = 0f64;
 
@@ -53,16 +55,18 @@ impl LR {
         self.bias = 0f64;
 
         for _ in 0..self.n_iters {
-            let A = Self::sigmoid(X.clone().dot(&self.weights));
-            let x = self.compute_loss(y.clone(), A.clone());
-            let dz: Array1<f64> = A.clone() - y.clone(); // derivative of sigmoid and bce X.T*(A-y)
+            let pred = Self::sigmoid(X.clone().dot(&self.weights));
 
+            let x = self.binary_cross_entropy(y.clone(), pred.clone());
+            self.losses.push(x);
+
+            // gradient descent
+            let dz: Array1<f64> = pred.clone() - y.clone(); // derivative of sigmoid and bce X.T*(A-y)
             dw = (1. / n_samples) * X.t().dot(&dz.clone());
-            db = (1. / n_samples) * (A.clone().sum() - y.clone().sum());
-            assert_eq!(self.weights.len(), dw.len());
-            for i in 0..dw.len() {
-                self.weights[i] -= self.learn_rate * dw[i];
-            }
+            db = (1. / n_samples) * (pred.clone().sum() - y.clone().sum());
+
+            // adjust weights based on gd
+            for i in 0..dw.len() { self.weights[i] -= self.learn_rate * dw[i]; }
             self.bias -= self.learn_rate * db;
         }
     }
@@ -70,8 +74,8 @@ impl LR {
     pub fn predict(&self, X: Array2<f64>) -> Array1<&str> {
         let y_hat = X.dot(&self.weights) + self.bias;
         let y_predicted = Self::sigmoid(y_hat);
-        println!("{}", y_predicted);
-        println!("{}", y_predicted.mean().unwrap());
+        // println!("{}", y_predicted);
+        // println!("{}", y_predicted.mean().unwrap());
         let y_predicted_cls = y_predicted.iter().map(|x| if x > &0.5 {"1"} else {"0"}).collect();
         y_predicted_cls
     }
