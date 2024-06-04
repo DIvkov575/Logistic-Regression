@@ -10,10 +10,8 @@ mod logistic_regression;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut data = CsvReader::new(File::open("data1.csv")?).finish()?;
-
     let mut X: Array2<f64> = DataFrame::new(data.columns([ "a", "b"])?.iter().map(|x| x.to_owned().to_owned().to_owned()).collect())?.to_ndarray::<Float64Type>(IndexOrder::C)?;
     let mut y: Array1<f64> = data.column("y").cloned()?.into_frame().to_ndarray::<Float64Type>(IndexOrder::C)?.t().iter().map(|x| x.to_owned()).collect();
-
 
     center(&mut X);
 
@@ -23,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("weights: {}", lr.weights);
     println!("predictions: {:?}", y_pred);
-    println!("real: {:?}", y);
+    println!("{:?}", y);
     Ok(())
 }
 
