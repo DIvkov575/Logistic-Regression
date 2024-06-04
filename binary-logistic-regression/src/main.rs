@@ -5,27 +5,56 @@ use std::str::FromStr;
 
 use ndarray::{Array1, Array2};
 use polars::prelude::*;
+use polars::prelude::FillNullStrategy::Mean;
 use crate::logistic_regression::LR;
 mod logistic_regression;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut data = CsvReader::new(File::open("data1.csv")?).finish()?;
+    let test_raw = CsvReader::new(File::open("test.csv")?).finish()?;
+    let train_raw = CsvReader::new(File::open("train.csv")?).finish()?;
 
-    let mut X: Array2<f64> = DataFrame::new(data.columns([ "a", "b"])?.iter().map(|x| x.to_owned().to_owned().to_owned()).collect())?.to_ndarray::<Float64Type>(IndexOrder::C)?;
-    let mut y: Array1<f64> = data.column("y").cloned()?.into_frame().to_ndarray::<Float64Type>(IndexOrder::C)?.t().iter().map(|x| x.to_owned()).collect();
+    let mut test = DataFrame::new(test_raw.columns(vec!["Parch", "Pclass", "Age",])?.iter().map(|x| x.to_owned().to_owned()).collect())?;
+    test.with_column(
+        test_raw.column("Sex")?
+            .str()?
+            .iter()
+            .map(|x| if x.unwrap().to_lowercase() == "female" {0i64} else {1i64})
+            .collect::<Series>()
+            .rename("Sex")
+            .to_owned()
+    )?;
+    test = test.fill_null(Mean)?;
+
+    let mut train = DataFrame::new(train_raw.columns(vec!["Parch", "Pclass", "Age", "Survived"])?.iter().map(|x| x.to_owned().to_owned()).collect())?;
+    train.with_column(
+        train_raw.column("Sex")?
+            .str()?
+            .iter()
+            .map(|x| if x.unwrap().to_lowercase() == "female" {0i64} else {1i64})
+            .collect::<Series>()
+            .rename("Sex")
+            .to_owned()
+    )?;
+    train = train.drop_nulls::<&str>(None)?;
+
+    let output_labels= test_raw.column("PassengerId")?;
+    let y_train: Array1<f64> = train.column("Survived").cloned()?.into_frame().to_ndarray::<Float64Type>(IndexOrder::C)?.t().iter().map(|x| x.to_owned()).collect();
+    train = train.drop("Survived")?;
+    let mut X_test = test.to_ndarray::<Float64Type>(IndexOrder::C)?;
+    let mut X_train = train.to_ndarray::<Float64Type>(IndexOrder::C)?;
+    center(&mut X_test);
+    center(&mut X_train);
 
 
 
-    center(&mut X);
+    let mut logistic_regession = LR::empty();
+    logistic_regession.fit(X_train, y_train);
+    let y_pred= logistic_regession.predict(X_test);
 
-    let mut lr = LR::empty();
-    lr.fit(X.clone(), y.clone());
-    let y_pred= lr.predict(X);
 
-    println!("{}", data);
-    println!("{}", lr.weights);
-    println!("{:?}", y_pred);
-    println!("{:?}", y);
+    let mut results = DataFrame::new(vec![output_labels.to_owned(), Series::from_iter(y_pred)])?;
+    let mut writer = CsvWriter::new(File::options().write(true).truncate(true).create(true).open(std::path::Path::new("out.csv"))?);
+    writer.finish(&mut results)?;
 
     Ok(())
 }
