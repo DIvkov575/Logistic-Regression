@@ -62,17 +62,3 @@ impl LR {
         y_predicted_cls
     }
 }
-
-
-// this is what the loss function looks like
-pub fn binary_cross_entropy(y_true: Array1<f64>, y_pred: Array1<f64>) -> f64 {
-    let mut y1 = 0f64;
-    let mut y2 = 0f64;
-
-    for index in 0..y_true.len() {
-        y1 += y_true[index] * (y_pred[index] + f64::EPSILON).ln();
-        y2 += (1f64 - y_true[index]) * (1f64 - y_pred[index] + f64::EPSILON).ln();
-    }
-
-    -(y1 + y2) / y_true.len() as f64
-}
